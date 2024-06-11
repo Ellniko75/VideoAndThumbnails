@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body id="xd">
+    <input type="text" id="input-text">
+    <button id="requestVideo">CLICK</button>
+    <video controls id="video"></video>
+
+    <br>
+    <br>
+    <br>
+
+    <input type="file" name="file" id="input-file">
+    <button id="sendFile">CLICK TO SEE IMAGE BACK FROM SERVER</button>
+
+    <br>
+    <br>
+    <br>
+
+    <h2>Ingrese el titulo del video</h2>
+    <input type="text" maxlength="20" id="videoTitle">
+    <input type="file" name="file" id="video-file" accept=".mp4">
+    <button id="UploadVideo">Upload Video</button>
+</body>
+
+
+<script type="module">
+
+    function loadVideo() {
+        let video = document.getElementById("video")
+        let text = document.getElementById("input-text").value
+        video.src = `http://localhost:8080/?videoname=${text}`
+        video.load();
+    }
+
+    document.getElementById("sendFile").addEventListener("click", async () => {
+        await readAndSendFile()
+    })
+    document.getElementById("requestVideo").addEventListener("click", async () => {
+        loadVideo()
+    })
+
+
+    document.getElementById("UploadVideo").addEventListener("click", async () => {
+        uploadVideo()
+
+    })
+
+    async function uploadVideo() {
+        //FORMAT: UINT8 ARRAY, VIDEO GOES FIRST, THEN 20 BYTES OF TEXT
+        const video = document.getElementById("video-file").files[0]
+        const arrayData = await video.arrayBuffer()
+        const arrayDataUint8 = new Uint8Array(arrayData)
+
+        let titulo = document.getElementById("videoTitle").value
+        //make sure the titulo is 20 bytes long
+        const spaceLeft = 20 - titulo.length
+        for (let i = 0; i < spaceLeft; i++) {
+            titulo += " "
+        }
+        const strArray = new TextEncoder().encode(titulo);
+
+        const concatenated = new Uint8Array(arrayDataUint8.length + strArray.length)
+        concatenated.set(arrayDataUint8)
+        concatenated.set(strArray, arrayDataUint8.length)
+
+
+        let data = await fetch(`http://localhost:8080/uploadVideoAndThumbnail`, {
+            method: "POST",
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': '*',
+            },
+            body: concatenated //sends the video as a bytes array
+        })
+
+
+    }
+
+    async function sendBlobImage(datos) {
+        let data = await fetch(`http://localhost:8080/postvideo`, {
+            method: "POST",
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': '*',
+            },
+            body: datos
+
+        })
+        return data
+
+    }
+
+    async function readAndSendFile() { //sends an image to a server, the server sends it back, and the function shows the image on the dom
+        const files = document.getElementById("input-file").files[0]
+
+        let fReader = new FileReader()
+        fReader.onload = async (e) => {
+            const imageData = e.target.result; //creates a string that contains all the data of the image
+            let response = await sendBlobImage(imageData) //sends the data to the server
+            let datosString = await response.text() //await readReadableStream(body) //read the readablestream and return the string of data
+            let img = document.createElement("img")
+            img.src = datosString
+            document.getElementById("xd").appendChild(img)
+        }
+        fReader.readAsDataURL(files); //calls the read function
+    }
+
+
+
+</script>
+
+</html>
