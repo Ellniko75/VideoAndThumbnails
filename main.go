@@ -77,7 +77,7 @@ func saveVideoAndThumbnail(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	if len(v) <= 0 {
+	if len(v) == 0 {
 		return
 	}
 
@@ -112,19 +112,13 @@ func getNameFromArray(arr []byte) string {
 	//here starts the name
 	namePortion := arr[whereVideoSectionEnds:]
 
-	result := make([]byte, 0)
-	//we go to len(nameportion) minus one, so as not to crash the checking of the blank spaces that we do a few lines below
-	for i := 0; i < len(namePortion)-1; i++ {
-		//checking of the blank spaces: if there is a blank space, that also has a blank space either behind or in front of himself,
-		//do NOT append it to the result
-		if namePortion[i] == 32 && (namePortion[i-1] == 32 || namePortion[i+1] == 32) {
-			continue
+	//remove padding of blank space (ascii code 32) from the end, until you hit something that is not a 32
+	for i := len(namePortion) - 1; i >= 0; i-- {
+		if namePortion[i] != 32 {
+			portion := namePortion[:i+1]
+			return string(portion)
 		}
-		result = append(result, namePortion[i])
 	}
-	lastCharacter := namePortion[len(namePortion)-1]
-	if lastCharacter != 32 {
-		result = append(result, lastCharacter)
-	}
-	return string(result)
+	return ""
+
 }
