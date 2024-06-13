@@ -24,6 +24,7 @@
     <br>
 
     <h2>Ingrese el titulo del video</h2>
+    <input type="text" maxlength="20" id="userName">
     <input type="text" maxlength="20" id="videoTitle">
     <input type="file" name="file" id="video-file" accept=".mp4">
     <button id="UploadVideo">Upload Video</button>
@@ -53,10 +54,18 @@
     })
 
     async function uploadVideo() {
+        const userName = document.getElementById("userName").value
+
+        const arrUserName = new Uint8Array(20)
+        arrUserName.set(new TextEncoder().encode(userName))
+        console.log(arrUserName)
+
         //FORMAT: UINT8 ARRAY, VIDEO GOES FIRST, THEN 20 BYTES OF TEXT
         const video = document.getElementById("video-file").files[0]
         const arrayData = await video.arrayBuffer()
         const arrayDataUint8 = new Uint8Array(arrayData)
+        const arrTitulo = new Uint8Array(20)
+
 
         let titulo = document.getElementById("videoTitle").value
         //make sure the titulo is 20 bytes long
@@ -64,6 +73,7 @@
         for (let i = 0; i < spaceLeft; i++) {
             titulo += " "
         }
+
         const strArray = new TextEncoder().encode(titulo);
 
         const concatenated = new Uint8Array(arrayDataUint8.length + strArray.length)

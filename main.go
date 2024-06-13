@@ -85,14 +85,13 @@ func saveVideoAndThumbnail(w http.ResponseWriter, r *http.Request) {
 	videoPortion := v[:finalVideoLength]
 	videoname := getNameFromArray(v)
 
-	erro := os.WriteFile(fmt.Sprint(videoname, ".mp4"), videoPortion, 0o777)
+	erro := os.WriteFile(fmt.Sprint("Video/", videoname, ".mp4"), videoPortion, 0o777)
 	if erro != nil {
 		log.Println("ERROR ON WRITING", erro)
 	}
-	log.Println("File created")
 
 	//Creates the thumbnails for that video, one each 4 seconds
-	cmd := exec.Command("ffmpeg", "-i", fmt.Sprint(videoname, ".mp4"), "-vf", "fps=1/4", "%04d.png")
+	cmd := exec.Command("ffmpeg", "-i", fmt.Sprint("Video/", videoname, ".mp4"), "-vf", "fps=1/4", "./Video/%04d.png")
 	cmd.Run()
 
 }
@@ -115,8 +114,8 @@ func getNameFromArray(arr []byte) string {
 	//remove padding of blank space (ascii code 32) from the end, until you hit something that is not a 32
 	for i := len(namePortion) - 1; i >= 0; i-- {
 		if namePortion[i] != 32 {
-			portion := namePortion[:i+1]
-			return string(portion)
+			return string(namePortion[:i+1])
+
 		}
 	}
 	return ""
