@@ -80,10 +80,13 @@ func saveVideoAndThumbnail(w http.ResponseWriter, r *http.Request) {
 	if len(v) == 0 {
 		return
 	}
-
+	//since the video title is 20 bytes long max, we read 20 bytes from where the video ends
+	//representation: [videoPortion(undefined Bytes size),title(20 bytes long)]
 	finalVideoLength := len(v) - 20
-	videoPortion := v[:finalVideoLength]
-	videoname := getNameFromArray(v)
+	//get video
+	videoPortion := getVideoFromArray(v, 0, finalVideoLength)
+	//get title
+	videoname := getNameFromArray(v, finalVideoLength, finalVideoLength+20)
 
 	erro := os.WriteFile(fmt.Sprint("Video/", videoname, ".mp4"), videoPortion, 0o777)
 	if erro != nil {
@@ -105,19 +108,22 @@ func main() {
 }
 
 // gets the name from the array and returns it in string format
-func getNameFromArray(arr []byte) string {
-	//this is where the video part of the slice ends
-	whereVideoSectionEnds := len(arr) - 20
-	//here starts the name
-	namePortion := arr[whereVideoSectionEnds:]
-
+// recieves the start and the end from which it has to read the array
+func getNameFromArray(arr []byte, start int, end int) string {
+	//start is the
+	namePortion := arr[start:end]
 	//remove padding of blank space (ascii code 32) from the end, until you hit something that is not a 32
 	for i := len(namePortion) - 1; i >= 0; i-- {
-		if namePortion[i] != 32 {
+		//whenever we stop seeing the zeroes (the padding that is added to the title if necessary to make it exactly 20 bytes long)
+		//we return the title, from the start of the name portion, to when the padding ends
+		if namePortion[i] != 0 {
 			return string(namePortion[:i+1])
-
 		}
 	}
 	return ""
 
+}
+
+func getVideoFromArray(arr []byte, start int, end int) []byte {
+	return arr[start:end]
 }

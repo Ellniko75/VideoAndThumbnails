@@ -64,21 +64,16 @@
         const video = document.getElementById("video-file").files[0]
         const arrayData = await video.arrayBuffer()
         const arrayDataUint8 = new Uint8Array(arrayData)
-        const arrTitulo = new Uint8Array(20)
 
+        //make sure the title is 20 bytes long
+        const title = document.getElementById("videoTitle").value
+        const titleArr20length = new Uint8Array(20)
+        const strArray = new TextEncoder().encode(title);
+        titleArr20length.set(strArray)
 
-        let titulo = document.getElementById("videoTitle").value
-        //make sure the titulo is 20 bytes long
-        const spaceLeft = 20 - titulo.length
-        for (let i = 0; i < spaceLeft; i++) {
-            titulo += " "
-        }
-
-        const strArray = new TextEncoder().encode(titulo);
-
-        const concatenated = new Uint8Array(arrayDataUint8.length + strArray.length)
+        const concatenated = new Uint8Array(arrayDataUint8.length + titleArr20length.length)
         concatenated.set(arrayDataUint8)
-        concatenated.set(strArray, arrayDataUint8.length)
+        concatenated.set(titleArr20length, arrayDataUint8.length)
 
 
         let data = await fetch(`http://localhost:8080/uploadVideoAndThumbnail`, {
